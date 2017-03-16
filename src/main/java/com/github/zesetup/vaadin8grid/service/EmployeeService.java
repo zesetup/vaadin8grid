@@ -4,6 +4,7 @@ import com.github.zesetup.vaadin8grid.domain.Employee;
 import com.vaadin.data.provider.BackEndDataProvider;
 
 import java.util.List;
+import java.util.Set;
 
 import org.springframework.stereotype.Service;
 
@@ -13,7 +14,7 @@ import org.springframework.stereotype.Service;
  *
  */
 @Service
-public interface EmployeeService extends BackEndDataProvider<Employee, String> {
+public interface EmployeeService extends BackEndDataProvider<Employee,  Set<String>> {
   void save(Employee employee);
 
   void update(Employee employee);
@@ -23,6 +24,4 @@ public interface EmployeeService extends BackEndDataProvider<Employee, String> {
   public Employee findOne(String id);
   
   public List<Employee> findAll();
-
-  void setFilter(String value);  
 }

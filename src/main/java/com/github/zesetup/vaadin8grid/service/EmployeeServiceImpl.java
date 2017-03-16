@@ -8,6 +8,7 @@ import com.vaadin.shared.Registration;
 import com.vaadin.shared.data.sort.SortDirection;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -78,15 +79,15 @@ public class EmployeeServiceImpl  implements EmployeeService {
  
   @Override
   public void refreshAll() {
-    logger.info("refreshAll() fired");
+    //logger.info("refreshAll() fired");
   }
   
   @Override
   public Stream<Employee> fetch(Query query) {
-    logger.info("Fetch fired, getFilter(query):" + getFilter(query));
+    logger.info("Fetch fired, filter:" + getFilter(query));
     PageQuery pageQuery = getPaging(query);
-    //Stream<employee> stream = getItems(pageQuery.pageable, getFilter(query))
-    Stream<Employee> stream = getItems(pageQuery.pageable, textFilter)
+    Stream<Employee> stream = getItems(pageQuery.pageable, getFilter(query))
+    //Stream<Employee> stream = getItems(pageQuery.pageable, textFilter)
         .skip(pageQuery.pageOffset).limit(query.getLimit());
     logger.info("Fetched count:" + getItems(pageQuery.pageable, "").count());
     return stream;
@@ -95,7 +96,7 @@ public class EmployeeServiceImpl  implements EmployeeService {
   private Stream<Employee> getItems(Pageable page, String filterText) {
     if (filterText == null || filterText.isEmpty()) {
       Page<Employee> result2 = employeeRepository.findAll(page);
-      logger.info("Filter NUll loaded items size:" + result2.getNumberOfElements());
+      logger.info("Filter items size:" +filterText+"/"+ result2.getNumberOfElements());
       return StreamSupport.stream(result2.spliterator(), false);
     }
     Page<Employee> result = employeeRepository.findByNameIgnoringCaseContaining(filterText, page);
@@ -104,11 +105,11 @@ public class EmployeeServiceImpl  implements EmployeeService {
 
   // BackEndDataProvider methods:
   protected String getFilter(Query query) {
-    String filter = null ;
+    logger.info(query.getFilter().toString());
     if (!query.getFilter().isPresent()){
       return null;
     }
-    return filter;
+    return query.getFilter().toString();
   }
 
   /**
@@ -174,10 +175,6 @@ public class EmployeeServiceImpl  implements EmployeeService {
        
   }
 
-  @Override
-  public void setFilter(String value) {
-    this.textFilter = value;
-  }
 
   @Override
   public void refreshItem(Employee item) {

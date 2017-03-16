@@ -2,6 +2,7 @@ package com.github.zesetup.vaadin8grid.ui;
 
 import com.github.zesetup.vaadin8grid.domain.Employee;
 import com.github.zesetup.vaadin8grid.service.EmployeeService;
+import com.vaadin.data.provider.ConfigurableFilterDataProvider;
 import com.vaadin.icons.VaadinIcons;
 import com.vaadin.shared.ui.ValueChangeMode;
 import com.vaadin.spring.annotation.SpringComponent;
@@ -11,6 +12,10 @@ import com.vaadin.ui.Grid;
 import com.vaadin.ui.HorizontalLayout;
 import com.vaadin.ui.TextField;
 import com.vaadin.ui.VerticalLayout;
+
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.Set;
 
 import javax.annotation.PostConstruct;
 import javax.inject.Inject;
@@ -34,7 +39,6 @@ public class EmployeeGrid extends VerticalLayout {
   
   @PostConstruct
   public void  init(){
-    grid.setDataProvider(employeeService); 
     setSizeFull();
     grid.addColumn(p -> String.valueOf(p.getName())).setCaption("Name").setSortProperty("name")
         .setWidth(200);
@@ -46,12 +50,22 @@ public class EmployeeGrid extends VerticalLayout {
     Button addNewBtn = new Button("New", VaadinIcons.PLUS);
     HorizontalLayout actions = new HorizontalLayout(filterField);
     addComponents(actions, grid); 
-  
+    ConfigurableFilterDataProvider<Employee, String, Set<String>> wrapper =
+        employeeService.withConfigurableFilter(
+          (String queryFilter, Set<String> configuredFilters) -> {
+            Set<String> combinedFilters = new HashSet<>();
+            combinedFilters.addAll(configuredFilters);
+            combinedFilters.add(queryFilter);
+            return combinedFilters;
+          }
+        );
+    grid.setDataProvider(wrapper); 
+    
     filterField.clear();
     filterField.addValueChangeListener(e ->  {
       logger.info("filter field:" + e.getValue());
-      employeeService.setFilter(e.getValue());
-      grid.setDataProvider(employeeService); 
+      wrapper.setFilter(Collections.singleton(e.getValue()));
+      grid.getDataCommunicator().reset();
     });
   }  
 }
