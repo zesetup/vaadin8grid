@@ -7,6 +7,7 @@ import com.vaadin.data.provider.Query;
 import com.vaadin.shared.Registration;
 import com.vaadin.shared.data.sort.SortDirection;
 
+import java.util.Iterator;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
@@ -105,11 +106,16 @@ public class EmployeeServiceImpl  implements EmployeeService {
 
   // BackEndDataProvider methods:
   protected String getFilter(Query query) {
-    logger.info(query.getFilter().toString());
-    if (!query.getFilter().isPresent()){
-      return null;
+    String filter=null;
+    if (query.getFilter().isPresent()){ 
+      Set<String> a =  (Set) query.getFilter().get();
+      for(String s: a){
+        if(s!=null){
+          filter=s;  
+        }
+      }
     }
-    return query.getFilter().toString();
+    return filter;
   }
 
   /**
@@ -167,10 +173,10 @@ public class EmployeeServiceImpl  implements EmployeeService {
 
   @Override
   public int size(Query query) {
-    if (textFilter == null) {
+    if (getFilter(query) == null) {
       return (int) employeeRepository.count();
     } else {
-      return (int) employeeRepository.countByNameIgnoringCaseContaining(textFilter);
+      return (int) employeeRepository.countByNameIgnoringCaseContaining(getFilter(query));
     }
        
   }
