@@ -47,8 +47,8 @@ public class Application extends SpringBootServletInitializer {
    */
   @Bean
   public CommandLineRunner  loadData() {
-    return (args) -> { 
-      for (int i = 0;i < 300;i++) {
+    return (args) -> {
+      for (int i = 0;i < 30000;i++) {
         employeeRepository.save(new Employee("login" + i, "name_" + i, "surname_" + i, "position_"
             + i));
       }

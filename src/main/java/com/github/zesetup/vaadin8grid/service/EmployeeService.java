@@ -2,6 +2,7 @@ package com.github.zesetup.vaadin8grid.service;
 
 import com.github.zesetup.vaadin8grid.domain.Employee;
 import com.vaadin.data.provider.BackEndDataProvider;
+import com.vaadin.data.provider.DataProvider;
 
 import java.util.List;
 import java.util.Set;
@@ -14,7 +15,7 @@ import org.springframework.stereotype.Service;
  *
  */
 @Service
-public interface EmployeeService extends BackEndDataProvider<Employee,  Set<String>> {
+public interface EmployeeService extends DataProvider<Employee,  String> {
   void save(Employee employee);
 
   void update(Employee employee);

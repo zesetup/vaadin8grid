@@ -2,12 +2,10 @@ package com.github.zesetup.vaadin8grid.service;
 
 import com.github.zesetup.vaadin8grid.data.EmployeeRepository;
 import com.github.zesetup.vaadin8grid.domain.Employee;
-import com.vaadin.data.provider.DataProviderListener;
+import com.vaadin.data.provider.AbstractBackEndDataProvider;
 import com.vaadin.data.provider.Query;
-import com.vaadin.shared.Registration;
 import com.vaadin.shared.data.sort.SortDirection;
 
-import java.util.Iterator;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
@@ -37,21 +35,18 @@ import org.springframework.transaction.annotation.Transactional;
  */
 @Component
 @Transactional
-public class EmployeeServiceImpl  implements EmployeeService {
+public class EmployeeServiceImpl extends AbstractBackEndDataProvider<Employee, String>
+  implements EmployeeService {
   private static final long serialVersionUID = 1L;
+  private static final Logger logger = LoggerFactory.getLogger(EmployeeServiceImpl.class);
 
   private static class PageQuery {
     Pageable pageable;
     int pageOffset;
   }
 
-  private static final Logger logger = LoggerFactory.getLogger(EmployeeServiceImpl.class);
-
   @Inject
   EmployeeRepository employeeRepository;
-
-  private String textFilter;
-
 
   public void save(Employee employee) {
     employeeRepository.save(employee);
@@ -76,46 +71,20 @@ public class EmployeeServiceImpl  implements EmployeeService {
   public List<Employee> findAll() {
     return employeeRepository.findAll();
   }
-  
- 
-  @Override
-  public void refreshAll() {
-    //logger.info("refreshAll() fired");
-  }
-  
-  @Override
-  public Stream<Employee> fetch(Query query) {
-    logger.info("Fetch fired, filter:" + getFilter(query));
-    PageQuery pageQuery = getPaging(query);
-    Stream<Employee> stream = getItems(pageQuery.pageable, getFilter(query))
-    //Stream<Employee> stream = getItems(pageQuery.pageable, textFilter)
-        .skip(pageQuery.pageOffset).limit(query.getLimit());
-    logger.info("Fetched count:" + getItems(pageQuery.pageable, "").count());
-    return stream;
-  }
-  
+
   private Stream<Employee> getItems(Pageable page, String filterText) {
+    Page<Employee> result;
     if (filterText == null || filterText.isEmpty()) {
-      Page<Employee> result2 = employeeRepository.findAll(page);
-      logger.info("Filter items size:" +filterText+"/"+ result2.getNumberOfElements());
-      return StreamSupport.stream(result2.spliterator(), false);
+      result = employeeRepository.findAll(page);
+      logger.info("Filter items size:" +filterText+"/"+ result.getNumberOfElements());
+      return StreamSupport.stream(result.spliterator(), false);
     }
-    Page<Employee> result = employeeRepository.findByNameIgnoringCaseContaining(filterText, page);
+    result = employeeRepository.findByNameIgnoringCaseContaining(filterText, page);
     return StreamSupport.stream(result.spliterator(), false);
   }
 
-  // BackEndDataProvider methods:
-  protected String getFilter(Query query) {
-    String filter=null;
-    if (query.getFilter().isPresent()){ 
-      Set<String> a =  (Set) query.getFilter().get();
-      for(String s: a){
-        if(s!=null){
-          filter=s;  
-        }
-      }
-    }
-    return filter;
+  protected String getFilter(Query <Employee, String> query) {
+    return query.getFilter().orElse("");
   }
 
   /**
@@ -164,34 +133,24 @@ public class EmployeeServiceImpl  implements EmployeeService {
             so.getSorted()))
         .collect(Collectors.toList()));
   }
- 
+
   @Override
-  public void setSortOrders(List sortOrders) {
-    // TODO Auto-generated method stub
-    
+  protected Stream<Employee> fetchFromBackEnd(Query<Employee, String> query) {
+    PageQuery pageQuery = getPaging(query);
+    Stream<Employee> stream = getItems(pageQuery.pageable, getFilter(query))
+    //Stream<Employee> stream = getItems(pageQuery.pageable, textFilter)
+        .skip(pageQuery.pageOffset).limit(query.getLimit());
+    logger.info("Fetched count:" + getItems(pageQuery.pageable, "").count());
+    return stream;
+
   }
 
   @Override
-  public int size(Query query) {
+  protected int sizeInBackEnd(Query<Employee, String> query) {
     if (getFilter(query) == null) {
       return (int) employeeRepository.count();
     } else {
       return (int) employeeRepository.countByNameIgnoringCaseContaining(getFilter(query));
-    }
-       
+    } 
   }
-
-
-  @Override
-  public void refreshItem(Employee item) {
-    // TODO Auto-generated method stub
-    
-  }
-
-  @Override
-  public Registration addDataProviderListener(DataProviderListener<Employee> listener) {
-    // TODO Auto-generated method stub
-    return null;
-  }
-
 }
